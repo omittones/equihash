@@ -34,22 +34,18 @@ typedef unsigned char uchar;
 #define WK	9
 #endif
 
-#ifndef HEADERNONCELEN
-#define HEADERNONCELEN 140
-#endif
-
 #define NDIGITS		(WK+1)
 #define DIGITBITS	(WN/(NDIGITS))
 
-static const u32 PROOFSIZE = 1<<WK;
-static const u32 BASE = 1<<DIGITBITS;
-static const u32 NHASHES = 2*BASE;
-static const u32 HASHESPERBLAKE = 512/WN;
-static const u32 HASHOUT = HASHESPERBLAKE*WN/8;
+const u32 PROOFSIZE = 1<<WK;
+const u32 BASE = 1<<DIGITBITS;
+const u32 NHASHES = 2*BASE;
+const u32 HASHESPERBLAKE = 512/WN;
+const u32 HASHOUT = HASHESPERBLAKE*WN/8;
 
 typedef u32 proof[PROOFSIZE];
 
-void setheader(blake2b_state *ctx, const char *headernonce) {
+void setheader(blake2b_state *ctx, const char *headernonce, const u32 headerLen, const char* nonce, const u32 nonceLen) {
   uint32_t le_N = htole32(WN);
   uint32_t le_K = htole32(WK);
   uchar personal[] = "ZcashPoW01230123";
@@ -68,7 +64,8 @@ void setheader(blake2b_state *ctx, const char *headernonce) {
   memset(P->salt,     0, sizeof(P->salt));
   memcpy(P->personal, (const uint8_t *)personal, 16);
   blake2b_init_param(ctx, P);
-  blake2b_update(ctx, (const uchar *)headernonce, HEADERNONCELEN);
+  blake2b_update(ctx, (const uchar *)headernonce, headerLen);
+  blake2b_update(ctx, (const uchar *)nonce, nonceLen);
 }
 
 enum verify_code { POW_OK, POW_HEADER_LENGTH, POW_DUPLICATE, POW_OUT_OF_ORDER, POW_NONZERO_XOR };
@@ -114,24 +111,24 @@ int compu32(const void *pa, const void *pb) {
   return a<b ? -1 : a==b ? 0 : +1;
 }
 
-bool duped(proof prf) {
+BOOL duped(proof prf) {
   proof sortprf;
   memcpy(sortprf, prf, sizeof(proof));
   qsort(sortprf, PROOFSIZE, sizeof(u32), &compu32);
   for (u32 i=1; i<PROOFSIZE; i++)
     if (sortprf[i] <= sortprf[i-1])
-      return true;
-  return false;
+      return 1;
+  return 0;
 }
 
 // verify Wagner conditions
-int verify(u32 indices[PROOFSIZE], const char *headernonce, const u32 headerlen) {
-  if (headerlen != HEADERNONCELEN)
+int verify(u32 indices[PROOFSIZE], const char *headernonce, const u32 headerlen, const char* nonce, const u32 nonceLen) {
+  if (headerlen != nonceLen)
     return POW_HEADER_LENGTH;
   if (duped(indices))
     return POW_DUPLICATE;
   blake2b_state ctx;
-  setheader(&ctx, headernonce);
+  setheader(&ctx, headernonce, headerlen, nonce, nonceLen);
   uchar hash[WN/8];
   return verifyrec(&ctx, indices, hash, WK);
 }

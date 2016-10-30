@@ -15,6 +15,8 @@ int hextobyte(const char * x) {
   return b;
 }
 
+#define NONCEMAXLEN 100
+
 int main(int argc, char **argv) {
   int nthreads = 1;
   int nonce = 0;
@@ -69,19 +71,18 @@ int main(int argc, char **argv) {
   printf(" and no AVX2\n");
 #endif
   u32 sumnsols = 0;
-  char headernonce[HEADERNONCELEN];
+  char buffer[NONCEMAXLEN] = { 0 };
   u32 hdrlen = strlen(header);
   if (*hex) {
-    assert(strlen(hex) == 2 * HEADERNONCELEN);
-    for (int i = 0; i < HEADERNONCELEN; i++)
-      headernonce[i] = hextobyte(&hex[2*i]);
+    assert(strlen(hex) == 2 * NONCEMAXLEN);
+    for (int i = 0; i < NONCEMAXLEN; i++)
+      buffer[i] = hextobyte(&hex[2*i]);
   } else {
-    memcpy(headernonce, header, hdrlen);
-    memset(headernonce+hdrlen, 0, sizeof(headernonce)-hdrlen);
-  }
+	  itoa(nonce, buffer, 10);
+  }  
+
   for (int r = 0; r < range; r++) {
-    ((u32 *)headernonce)[32] = htole32(nonce+r);
-    eq.setheadernonce(headernonce, sizeof(headernonce));
+    eq.setheadernonce(header, hdrlen, buffer, strlen(buffer));
     for (int t = 0; t < nthreads; t++) {
       threads[t].id = t;
       threads[t].eq = &eq;

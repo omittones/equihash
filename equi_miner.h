@@ -294,8 +294,8 @@ struct equi {
     free(sols);
   }
   // prepare blake2b midstate for new run and initialize counters
-  void setheadernonce(const char *headernonce, const u32 len) {
-    setheader(&blake_ctx, headernonce);
+  void setheadernonce(const char *headernonce, const u32 headerLen, const char* nonce, const u32 nonceLen) {
+    setheader(&blake_ctx, headernonce, headerLen, nonce, nonceLen);
     memset(nslots, 0, NBUCKETS * sizeof(au32)); // only nslots[0] needs zeroing
     nsols = bfull = hfull = 0;
   }
