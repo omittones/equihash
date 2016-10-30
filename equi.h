@@ -1,7 +1,6 @@
 // Equihash solver
 // Copyright (c) 2016-2016 John Tromp
 
-#include "blake/blake2.h"
 #ifdef __APPLE__
 #include "osx_barrier.h"
 #include <machine/endian.h>
@@ -16,6 +15,8 @@
 #define htole32(x) __builtin_bswap32(x)
 #endif
 #endif
+
+#include "blake/blake2.h"
 #include <stdint.h> // for types uint32_t,uint64_t
 #include <string.h> // for functions memset
 #include <stdlib.h> // for function qsort

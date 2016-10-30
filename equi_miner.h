@@ -34,12 +34,11 @@
 // In practice this works very well to avoid bucket overflow
 // and produces negligible false positives
 
-#include "equi.h"
-#include <stdio.h>
-#include <pthread.h>
 #if !WIN32
 #include <endian.h>
 #else
+#include <winsock2.h>
+#define _TIMESPEC_DEFINED
 #if BYTE_ORDER == LITTLE_ENDIAN
 #define htole32(x) (x)
 #define htobe32(x) htonl(x)
@@ -48,6 +47,10 @@
 #define htobe32(x) (x)
 #endif
 #endif
+
+#include "equi.h"
+#include <stdio.h>
+#include <pthread.h>
 #include <assert.h>
 
 #include "blake2-avx2/blake2bip.h"
@@ -236,11 +239,6 @@ typedef au32 bsizes[NBUCKETS];
 // heap, and writes buckets in the other heap.
 // In the final round K, all pairs leading to 0 xors are identified
 // and their leafs recovered through the DAG of tree nodes
-
-// convenience function
-u32 min(const u32 a, const u32 b) {
-  return a < b ? a : b;
-}
 
 // size (in bytes) of hash in round 0 <= r < WK
 u32 hashsize(const u32 r) {
