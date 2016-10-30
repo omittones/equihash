@@ -7,8 +7,14 @@
 #include <machine/endian.h>
 #include <libkern/OSByteOrder.h>
 #define htole32(x) OSSwapHostToLittleInt32(x)
-#else
+#elif !WIN32
 #include <endian.h>
+#else
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define htole32(x) (x)
+#elif BYTE_ORDER == BIG_ENDIAN
+#define htole32(x) __builtin_bswap32(x)
+#endif
 #endif
 #include <stdint.h> // for types uint32_t,uint64_t
 #include <string.h> // for functions memset

@@ -37,6 +37,17 @@
 #include "equi.h"
 #include <stdio.h>
 #include <pthread.h>
+#if !WIN32
+#include <endian.h>
+#else
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define htole32(x) (x)
+#define htobe32(x) htonl(x)
+#elif BYTE_ORDER == BIG_ENDIAN
+#define htole32(x) __builtin_bswap32(x)
+#define htobe32(x) (x)
+#endif
+#endif
 #include <assert.h>
 
 #include "blake2-avx2/blake2bip.h"
