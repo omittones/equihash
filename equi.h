@@ -37,11 +37,11 @@ typedef unsigned char uchar;
 #define NDIGITS		(WK+1)
 #define DIGITBITS	(WN/(NDIGITS))
 
-const u32 PROOFSIZE = 1<<WK;
-const u32 BASE = 1<<DIGITBITS;
-const u32 NHASHES = 2*BASE;
-const u32 HASHESPERBLAKE = 512/WN;
-const u32 HASHOUT = HASHESPERBLAKE*WN/8;
+#define PROOFSIZE  (1<<WK)
+#define BASE       (1<<DIGITBITS)
+#define NHASHES    (2*BASE)
+#define HASHESPERBLAKE (512/WN)
+#define HASHOUT    (HASHESPERBLAKE*WN/8)
 
 typedef u32 proof[PROOFSIZE];
 
@@ -111,7 +111,7 @@ int compu32(const void *pa, const void *pb) {
   return a<b ? -1 : a==b ? 0 : +1;
 }
 
-BOOL duped(proof prf) {
+int duped(proof prf) {
   proof sortprf;
   memcpy(sortprf, prf, sizeof(proof));
   qsort(sortprf, PROOFSIZE, sizeof(u32), &compu32);
@@ -125,7 +125,7 @@ BOOL duped(proof prf) {
 int verify(u32 indices[PROOFSIZE], const char *headernonce, const u32 headerlen, const char* nonce, const u32 nonceLen) {
   if (headerlen != nonceLen)
     return POW_HEADER_LENGTH;
-  if (duped(indices))
+  if (duped(indices) == 1)
     return POW_DUPLICATE;
   blake2b_state ctx;
   setheader(&ctx, headernonce, headerlen, nonce, nonceLen);
