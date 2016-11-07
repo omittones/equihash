@@ -22,11 +22,12 @@ typedef uint16_t u16;
 typedef uint64_t u64;
 
 #define checkCudaErrors(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true) {
-  if (code != cudaSuccess) {
-    fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-    if (abort) exit(code);
-  }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort = true) {
+	if (code != cudaSuccess) {
+		fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+		if (abort)
+			exit(code);
+	}
 }
 
 #ifndef RESTBITS
@@ -912,4 +913,42 @@ __global__ void digitK(equi *eq) {
       }
     }
   }
+}
+
+void runEquihash(int nthreads, int tpb, equi* eq, equi* device_eq, proof* sols) {
+
+	printf("Digit 0\n");
+
+	digitH<<<nthreads / tpb, tpb>>>(device_eq);
+
+#if BUCKBITS == 16 && RESTBITS == 4 && defined XINTREE && defined(UNROLL)
+	printf("Digit %d\n", 1);
+	digit_1<<<nthreads / tpb, tpb>>>(device_eq);
+	printf("Digit %d\n", 2);
+	digit2<<<nthreads / tpb, tpb>>>(device_eq);
+	printf("Digit %d\n", 3);
+	digit3<<<nthreads / tpb, tpb>>>(device_eq);
+	printf("Digit %d\n", 4);
+	digit4<<<nthreads / tpb, tpb>>>(device_eq);
+	printf("Digit %d\n", 5);
+	digit5<<<nthreads / tpb, tpb>>>(device_eq);
+	printf("Digit %d\n", 6);
+	digit6<<<nthreads / tpb, tpb>>>(device_eq);
+	printf("Digit %d\n", 7);
+	digit7<<<nthreads / tpb, tpb>>>(device_eq);
+	printf("Digit %d\n", 8);
+	digit8<<<nthreads / tpb, tpb>>>(device_eq);
+#else
+	for (u32 r = 1; r < WK; r++) {
+		printf("Digit %d\n", r);
+		r & 1 ? digitO<<<nthreads / tpb, tpb>>>(device_eq, r)
+			: digitE<<<nthreads / tpb, tpb>>>(device_eq, r);
+		eq.showbsizes(r);
+	}
+#endif
+	printf("Digit %d\n", WK);
+	digitK<<<nthreads / tpb, tpb>>>(device_eq);
+		
+	checkCudaErrors(cudaMemcpy(eq, device_eq, sizeof(equi), cudaMemcpyDeviceToHost));
+	checkCudaErrors(cudaMemcpy(sols, eq->sols, MAXSOLS * sizeof(proof), cudaMemcpyDeviceToHost));
 }
