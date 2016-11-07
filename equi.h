@@ -1,5 +1,6 @@
 // Equihash solver
 // Copyright (c) 2016-2016 John Tromp
+#pragma once
 
 #ifdef __APPLE__
 #include "osx_barrier.h"
